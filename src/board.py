@@ -26,12 +26,16 @@ DIRECTIONS = [
 class Board():
   def reset(self):
     self.board = np.array([EMPTY] * 64, dtype=np.float32)
+    self.board[35] = 1
+    self.board[44] = 1
+    self.board[36] = -1
+    self.board[43] = -1
     self.winner = None
     self.missed = False
     self.done = False
 
   def move(self, act, turn):
-    if self.board[act] == 0:
+    if self.can_move(act):
       self.board[act] = turn
       self.check_winner()
     else:
@@ -43,12 +47,12 @@ class Board():
     if EMPTY in self.board:
       return
 
-    myStones = self.board.count(1)
-    enemyStones = self.board.count(-1)
+    my_stones = self.board.count(1)
+    enemy_stones = self.board.count(-1)
 
-    if myStones > enemyStones:
+    if my_stones > enemy_stones:
       self.winner = 1
-    elif myStones == enemyStones:
+    elif my_stones == enemy_stones:
       self.winner = 0
     else:
       self.winner = -1
@@ -59,27 +63,24 @@ class Board():
     """配置可能な位置の配列を返す
     """
     enemies = np.where(self.board==-1)[0]
-    positions = []
+    empties = []
     for pos in enemies:
-      for direction in DIRECTIONS:
-        if self.can_move(pos, direction):
-          positions.append(pos+direction)
+      empties.extend([pos+direction for direction in DIRECTIONS if self.board[pos+direction] == EMPTY])
 
-    return positions
+    empties = list(set(empties))
+    return [pos for pos in empties if self.can_move(pos)]
 
-  def can_move(self, pos, direction):
-    nextPosition = pos+direction
-
+  def can_move(self, pos):
     # 配置場所に既に石が存在
-    if self.board[nextPosition] != EMPTY:
+    if self.board[pos] != EMPTY:
       return False
 
     # 配置場所がボードの外
-    if is_out_of_board(pos, direction):
+    if self.is_out_of_board(pos):
       return False
 
     # 配置場所に置いて石を裏返せるか
-    if self.can_flip(nextPosition) == False:
+    if self.can_flip(pos) == False:
       return False
 
     return True
@@ -110,29 +111,31 @@ class Board():
       bool: True 裏返す石が存在, False 裏返す石が存在しない
     """
     positions = []
-    while self.is_out_of_board(pos, direction) == False:
-      nextPosition = pos + direction
+    next_position = pos+direction
+    while self.is_out_of_board(next_position) == False:
+      if self.board[next_position] == EMPTY:
+        return False
 
-      if self.board[nextPosition] == 1:
-        return positions != []
+      if self.board[next_position] == 1:
+        if positions == []:
+          return False
 
-      if self.board[nextPosition] == -1:
-        positions.append(nextPosition)
+        positions.sort()
+        for i in range(len(positions)-1):
+          if (positions[i+1] - positions[i]) not in [1,7,8,9]:
+            return False
+
+        return True
+
+      if self.board[next_position] == -1:
+        positions.append(pos)
+
+      next_position += direction
 
     return False
 
-  def is_out_of_board(self, pos, direction):
-    isOutOfBoard = False
-    if pos % 8 == 0:
-      isOutOfBoard = isOutOfBoard or direction in [LEFT_UP, LEFT, LEFT_DOWN]
-
-    if pos % 8 == 7:
-      isOutOfBoard = isOutOfBoard or direction in [RIGHT_UP, RIGHT, RIGHT_DOWN]
-
-    nextPostion = pos + direction
-    isOutOfBoard = isOutOfBoard or nextPostion < 0 or 63 < nextPostion
-
-    return isOutOfBoard
+  def is_out_of_board(self, pos):
+    return pos < 0 or 63 < pos
 
   def get_empty_pos(self):
       empties = np.where(self.board==EMPTY)[0]
@@ -142,8 +145,8 @@ class Board():
         return 0
 
   def show(self):
-      row = " {} | {} | {} "
-      hr = "\n-----------\n"
+      row = "| {} | {} | {} | {} | {} | {} | {} | {} |"
+      hr = "\n|{}|\n".format("-"*31)
       tempboard = []
       for i in self.board:
         if i == 1:
@@ -153,5 +156,5 @@ class Board():
         else:
           tempboard.append(" ")
 
-      print((row + hr + row + hr + row).format(*tempboard))
+      print((hr + row)*8 + hr).format(*tempboard)
       print("\n")
