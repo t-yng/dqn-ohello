@@ -51,10 +51,12 @@ class Board():
     enemies = np.where(self.board==-1)[0]
     empties = []
     for pos in enemies:
-      empties.extend([pos+direction for direction in DIRECTIONS if self.board[pos+direction] == EMPTY])
+      for direction in DIRECTIONS:
+        if self.__is_out_of_board(pos+direction) == False and self.board[pos+direction] == EMPTY:
+          empties.append(pos+direction)
 
     empties = list(set(empties))
-    return [pos for pos in empties if self.can_move(pos)]
+    return [pos for pos in empties if self.__can_move(pos)]
 
   def show(self):
       row = "| {} | {} | {} | {} | {} | {} | {} | {} |"
@@ -75,8 +77,8 @@ class Board():
     if EMPTY in self.board:
       return
 
-    my_stones = self.board.count(1)
-    enemy_stones = self.board.count(-1)
+    my_stones = np.count_nonzero(self.board == 1)
+    enemy_stones = np.count_nonzero(self.board == -1)
 
     if my_stones > enemy_stones:
       self.winner = 1
