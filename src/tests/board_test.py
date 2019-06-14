@@ -26,6 +26,57 @@ class BoardTestCase(unittest.TestCase):
     self.assertEqual(self.board.missed, False)
     self.assertEqual(self.board.done, False)
 
+  def test_move_when_finish_game_with_win(self):
+    self.board.board = self.__make_board_array([
+      [-1, -1, -1, -1, -1, -1, -1, -1],
+      [-1, -1, -1, -1, -1, -1, -1, -1],
+      [1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 1, 1, 1, 1, 1, -1, 1],
+      [1, 1, 1, 1, 1, 1, 1, 0],
+    ])
+
+    self.board.move(63, 1)
+
+    self.assertEqual(self.board.winner, 1)
+    self.assertTrue(self.board.done)
+
+  def test_move_when_finish_game_with_draw(self):
+    self.board.board = self.__make_board_array([
+      [-1, -1, -1, -1, -1, -1, -1, -1],
+      [-1, -1, -1, -1, -1, -1, -1, -1],
+      [-1, -1, -1, -1, -1, -1, -1, -1],
+      [-1, -1, -1, -1, -1, -1, -1, -1],
+      [1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 1, 1, 1, 1, 1, -1, 1],
+      [1, 1, 1, 1, 1, 1, 1, 0],
+    ])
+
+    self.board.move(63, 1)
+
+    self.assertEqual(self.board.winner, 0)
+    self.assertTrue(self.board.done)
+
+  def test_move_when_finish_game_with_lose(self):
+    self.board.board = self.__make_board_array([
+      [-1, -1, -1, -1, -1, -1, -1, -1],
+      [-1, -1, -1, -1, -1, -1, -1, -1],
+      [-1, -1, -1, -1, -1, -1, -1, -1],
+      [-1, -1, -1, -1, -1, -1, -1, -1],
+      [-1, -1, -1, -1, -1, -1, -1, -1],
+      [1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 1, 1, 1, 1, 1, -1, 1],
+      [1, 1, 1, 1, 1, 1, 1, 0],
+    ])
+
+    self.board.move(63, 1)
+
+    self.assertEqual(self.board.winner, -1)
+    self.assertTrue(self.board.done)
+
   def test_move_when_act_is_correct(self):
     self.board.move(5*8+3, 1)
 
@@ -92,6 +143,43 @@ class BoardTestCase(unittest.TestCase):
       with self.subTest(pos=pos):
         self.board.move(pos, 1)
         self.assertTrue(self.board.missed)
+
+  def test_get_empty_positions_when_reset(self):
+    [
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 1, -1, 0, 0, 0],
+      [0, 0, 0, -1, 1, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+    ]
+
+    result = self.board.get_empty_positions()
+    expected = [20, 29, 34, 43]
+    result.sort()
+    expected.sort()
+    self.assertEqual(result, expected)
+
+  def test_get_empty_positions(self):
+    self.board.board = self.__make_board_array([
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 1, 0, 0, 0, 0],
+      [0, 0, -1, 1, -1, 0, 0, 0],
+      [0, 0, 0, -1, -1, 0, 0, 0],
+      [0, 0, 0, 1, -1, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+    ])
+
+    result = self.board.get_empty_positions()
+    expected = [25, 29, 33, 37, 45]
+
+    result.sort()
+    expected.sort()
+    self.assertEqual(result, expected)
 
   def __make_board_array(self, board):
     return np.array(board, dtype=np.float32).ravel()
