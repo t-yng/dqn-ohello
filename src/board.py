@@ -1,27 +1,8 @@
 import time
+from itertools import product
 import numpy as np
 
 EMPTY = 0
-
-LEFT_UP = -9
-UP = -8
-RIGHT_UP = -7
-LEFT = -1
-RIGHT = 1
-LEFT_DOWN = 7
-DOWN = 8
-RIGHT_DOWN = 9
-
-DIRECTIONS = [
-  LEFT_UP,
-  UP,
-  RIGHT_UP,
-  LEFT,
-  RIGHT,
-  LEFT_DOWN,
-  DOWN,
-  RIGHT_DOWN
-]
 
 class Board():
   def reset(self):
@@ -51,16 +32,19 @@ class Board():
     enemies = np.where(self.board==-1)[0]
     empties = []
     for pos in enemies:
-      for direction in DIRECTIONS:
-        if self.__is_out_of_board(pos+direction) == False and self.board[pos+direction] == EMPTY:
-          empties.append(pos+direction)
+      for x, y in product([-1, 0, 1], [-1, 0, 1]):
+        next_position = pos+(y*8 + x)
+        next_x = (pos % 8) + x
+        next_y = (pos // 8) + y
+        if (next_x >= 0 and next_x < 8) and (next_y >= 0 and next_y < 8) and self.board[next_position] == EMPTY:
+          empties.append(next_position)
 
     empties = list(set(empties))
     return [pos for pos in empties if self.__can_move(pos)]
 
   def show(self):
-      row = "| {} | {} | {} | {} | {} | {} | {} | {} |"
-      hr = "\n|{}|\n".format("-"*31)
+      hr = "|{}|\n".format("-"*31)
+      row = "| {} | {} | {} | {} | {} | {} | {} | {} |\n"
       tempboard = []
       for i in self.board:
         if i == 1:
@@ -70,8 +54,9 @@ class Board():
         else:
           tempboard.append(" ")
 
-      print((hr + row)*8 + hr).format(*tempboard)
-      print("\n")
+      return hr + ((row + hr)*8).format(*tempboard)
+      # print((hr + row)*8 + hr.format(*tempboard))
+      # print("\n")
 
   def __check_winner(self):
     if EMPTY in self.board:
@@ -109,22 +94,27 @@ class Board():
     Returns:
       bool: True 裏返し可能, False 裏返し不可能
     """
-    for direction in DIRECTIONS:
-      if self.__exists_flip_stones(pos, direction):
+    for x, y in product([-1, 0, 1], [-1, 0, 1]):
+      if x == 0 and y == 0:
+        continue
+
+      if self.__exists_flip_stones(pos, x, y):
         return True
 
     return False
 
   def __get_flip_positions(self, pos):
     positions = []
-    for direction in DIRECTIONS:
-      temp_positions = []
-      next_position = pos+direction
-      while self.__is_out_of_board(next_position) == False:
-        if self.board[next_position] == EMPTY:
-          break
+    for x, y in product([-1, 0, 1], [-1, 0, 1]):
+      if x == 0 and y == 0:
+        continue
 
-        if self.board[next_position] == -1 and self.__is_edge_of_board(next_position):
+      temp_positions = []
+      next_position = pos+(y * 8 + x)
+      next_x = (pos % 8) + x
+      next_y = (pos // 8) + y
+      while (next_x >= 0 and next_x < 8) and (next_y >= 0 and next_y < 8):
+        if self.board[next_position] == EMPTY:
           break
 
         if self.board[next_position] == 1:
@@ -134,11 +124,13 @@ class Board():
         if self.board[next_position] == -1:
           temp_positions.append(next_position)
 
-        next_position += direction
+        next_position = next_position+(y*8 + x)
+        next_x = next_x + x
+        next_y = next_y + y
 
     return list(set(positions))
 
-  def __exists_flip_stones(self, pos, direction):
+  def __exists_flip_stones(self, pos, x, y):
     """特定方向に裏返す石が存在するか
 
     Args:
@@ -149,12 +141,11 @@ class Board():
       bool: True 裏返す石が存在, False 裏返す石が存在しない
     """
     positions = []
-    next_position = pos+direction
-    while self.__is_out_of_board(next_position) == False:
+    next_position = pos+(y*8 + x)
+    next_x = (pos % 8) + x
+    next_y = (pos // 8) + y
+    while (next_x >= 0 and next_x < 8) and (next_y >= 0 and next_y < 8):
       if self.board[next_position] == EMPTY:
-        return False
-
-      if self.board[next_position] == -1 and self.__is_edge_of_board(next_position):
         return False
 
       if self.board[next_position] == 1:
@@ -163,24 +154,8 @@ class Board():
       if self.board[next_position] == -1:
         positions.append(pos)
 
-      next_position += direction
+      next_position = next_position+(y*8 + x)
+      next_x = next_x + x
+      next_y = next_y + y
 
     return False
-
-  def __is_edge_of_board(self, pos):
-    if pos % 8 == 0: # 左端
-      return True
-
-    if pos % 8 == 7: # 右端
-      return True
-
-    if pos >= 0 and pos <= 7: # 上端
-      return True
-
-    if pos >= 56 and pos <= 63: # 下端
-      return True
-
-    return False
-
-  def __is_out_of_board(self, pos):
-    return pos < 0 or 63 < pos
