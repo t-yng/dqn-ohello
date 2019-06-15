@@ -120,6 +120,33 @@ class BoardTestCase(unittest.TestCase):
     self.board.move(26, 1)
     np.testing.assert_array_equal(self.board.board, expected)
 
+  def test_move_flip_stones_when_edge(self):
+    self.board.board = self.__make_board_array([
+      [0, -1, -1, 1, 0, 0, 0, 0],
+      [-1, 0, 0, 0, 0, 0, 0, 0],
+      [1, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+    ])
+
+    expected = self.__make_board_array([
+      [1, 1, 1, 1, 0, 0, 0, 0],
+      [1, 0, 0, 0, 0, 0, 0, 0],
+      [1, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0],
+    ])
+
+    self.board.move(0, 1)
+    np.testing.assert_array_equal(self.board.board, expected)
+    self.assertEqual(self.board.missed, False)
+
   def test_move_when_act_position_has_a_stone_already(self):
     self.board.move(27, 1)
     self.assertTrue(self.board.missed)
