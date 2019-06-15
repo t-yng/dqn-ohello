@@ -21,7 +21,7 @@ class Board():
       for pos in self.__get_flip_positions(act):
         self.board[pos] = turn
       self.__check_winner()
-    else:
+    elif self.get_empty_positions() != []:
       self.winner = turn*-1
       self.missed = True
       self.done = True
